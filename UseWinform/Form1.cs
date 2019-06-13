@@ -21,17 +21,18 @@ namespace UseWinform
 
         private void button1_Click(object sender, EventArgs e)
         {
-                this.ShowWaitDialog(this.setResultFibon);
+                this.ShowWaitDialog();
                 this.label1.Text = "Résult : "+ this.result;
         }
 
-        private void setResultFibon()
+        private async Task<int> setResultFibon()
         {
             ServiceReference1.mainSoapClient mainSoapClient = new ServiceReference1.mainSoapClient();
-            result =  mainSoapClient.Fibonacci(10);
+            Thread.Sleep(2000);
+            return await Task.Run<int>(()=> mainSoapClient.Fibonacci(10));
         }
 
-        private void ShowWaitDialog(Action codeToRun)
+        private async void ShowWaitDialog()
         {
             ManualResetEvent dialogLoadedFlag = new ManualResetEvent(false);
 
@@ -67,8 +68,7 @@ namespace UseWinform
                 
                     (new Thread(() =>
                     {
-                        codeToRun();
-                        Thread.Sleep(2000);
+                        this.result = this.setResultFibon().Result;
                         this.Invoke((MethodInvoker)(() => waitDialog.Close()));
                     })).Start();
                     
@@ -76,7 +76,7 @@ namespace UseWinform
                 this.Invoke((MethodInvoker)(() => waitDialog.ShowDialog(this)));
             })).Start();
             while (dialogLoadedFlag.WaitOne(100, true) == false)
-                Application.DoEvents(); // note: this will block the main thread once the wait dialog shows
+                Application.DoEvents(); 
         }
     }
 }
